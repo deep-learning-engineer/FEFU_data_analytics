@@ -10,6 +10,7 @@ This project simulates a banking system with:
 - Scheduled payments
 - User achievements system
 - Real-time data generation
+- Redash dashboard for data visualization
 
 ## Quick start
 
@@ -24,4 +25,12 @@ docker compose up -d
 ```
 
 ## Database architecture
-![UML](./UML-MobileBank.jpg)
+![UML](./assets/UML-MobileBank.jpg)
+
+## Dashboard Examples
+
+**Transaction Dashboard:** 
+![Dashboard](./assets/Dashboard_Transactions.png)
+
+**User Dashboard:**
+![Dashboard](./assets/Dashboard_Users.png)

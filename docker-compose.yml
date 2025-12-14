@@ -18,17 +18,95 @@ services:
       retries: 5
     networks:
       - bank-network
-    
+    restart: unless-stopped
+
   generator:
-      build: ./generator
-      container_name: bank-generator
-      env_file:
-        - .env
-      depends_on:
-        postgres:
-          condition: service_healthy
-      networks:
-        - bank-network
+    build: ./generator
+    container_name: bank-generator
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bank-network
+    restart: unless-stopped
+
+  redash-redis:
+    image: redis:7-alpine
+    container_name: bank-redis
+    networks:
+      - bank-network
+    restart: unless-stopped
+
+  redash-init:
+    image: redash/redash:latest
+    container_name: bank-redash-init
+    command: create_db 
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      REDASH_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/redash_internal
+    networks:
+      - bank-network
+
+  redash:
+    image: redash/redash:latest
+    container_name: bank-redash-server
+    command: server
+    ports:
+      - "${REDASH_PORT}:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redash-redis:
+        condition: service_started
+      redash-init:
+        condition: service_completed_successfully
+    environment:
+      REDASH_LOG_LEVEL: "INFO"
+      REDASH_REDIS_URL: redis://redash-redis:6379/0
+      REDASH_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/redash_internal
+      REDASH_COOKIE_SECRET: ${REDASH_SECRET_KEY}
+      REDASH_SECRET_KEY: ${REDASH_SECRET_KEY}
+      REDASH_WEB_WORKERS: ${REDASH_WEB_WORKERS}
+    networks:
+      - bank-network
+    restart: unless-stopped
+
+  redash-scheduler:
+    image: redash/redash:latest
+    container_name: bank-redash-scheduler
+    command: scheduler
+    depends_on:
+      redash:
+        condition: service_started
+    environment:
+      REDASH_REDIS_URL: redis://redash-redis:6379/0
+      REDASH_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/redash_internal
+      REDASH_COOKIE_SECRET: ${REDASH_SECRET_KEY}
+      REDASH_SECRET_KEY: ${REDASH_SECRET_KEY}
+    networks:
+      - bank-network
+    restart: unless-stopped
+
+  redash-worker:
+    image: redash/redash:latest
+    container_name: bank-redash-worker
+    command: worker
+    depends_on:
+      redash:
+        condition: service_started
+    environment:
+      REDASH_REDIS_URL: redis://redash-redis:6379/0
+      REDASH_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/redash_internal
+      REDASH_COOKIE_SECRET: ${REDASH_SECRET_KEY}
+      REDASH_SECRET_KEY: ${REDASH_SECRET_KEY}
+      QUEUES: "queries,scheduled_queries,celery"
+    networks:
+      - bank-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
