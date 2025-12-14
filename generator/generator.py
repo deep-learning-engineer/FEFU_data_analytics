@@ -28,7 +28,7 @@ class BankDataGenerator:
             'user': os.getenv('POSTGRES_USER', 'bank_user'),
             'password': os.getenv('POSTGRES_PASSWORD', 'bank_password'),
             'host': os.getenv('POSTGRES_HOST', 'postgres'),
-            'port': os.getenv('POSTGRES_PORT', '5432')
+            'port': '5432'
         }
 
         self.interval = float(os.getenv('GENERATOR_INTERVAL', '1.0'))
