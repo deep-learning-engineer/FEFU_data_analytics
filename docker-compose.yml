@@ -16,6 +16,23 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - bank-network
+    
+  generator:
+      build: ./generator
+      container_name: bank-generator
+      env_file:
+        - .env
+      depends_on:
+        postgres:
+          condition: service_healthy
+      networks:
+        - bank-network
 
 volumes:
   postgres_data:
+
+networks:
+  bank-network:
+    driver: bridge
