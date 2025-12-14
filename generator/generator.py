@@ -327,9 +327,11 @@ class BankDataGenerator:
                     )
 
                 logger.info(
-                    f"Created transaction: {amount} {sender_account.get('currency', 'USD') if sender_account else 'USD'} "
+                    f"Created transaction: {amount} "
+                    f"{sender_account.get('currency', 'USD') if sender_account else 'USD'} "
                     f"from {sender_account.get('account_number', 'DEPOSIT') if sender_account else 'DEPOSIT'} "
-                    f"to {receiver_account['account_number']} ({converted_amount} {receiver_account.get('currency', 'USD')})"
+                    f"to {receiver_account['account_number']} "
+                    f"({converted_amount} {receiver_account.get('currency', 'USD')})"
                 )
 
         except Exception as e:
@@ -442,19 +444,20 @@ class BankDataGenerator:
         counter = 0
         try:
             while True:
-                if counter % 10:
+                if counter % 10 == 0:
                     self.create_user()
 
-                if counter % 20:
+                if counter % 20 == 0:
                     self.create_account()
 
                 self.generate_transaction()
                 self.update_achievements()
 
-                if counter % 100:
+                if counter % 300 == 0:
                     self.print_stats()
 
                 time.sleep(self.interval)
+                counter = (counter + 1) % 301
 
         except KeyboardInterrupt:
             logger.info("Stopping generator...")
